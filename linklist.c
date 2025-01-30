@@ -22,18 +22,93 @@ void link_list_display(struct label *h)
  
     while(copy!=NULL)
     {
-       printf(" %d :: ",copy->l );
-       struct pos *track=copy->ptr;
+       printf(" %d --> ",copy->l );
+       /*struct pos *track=copy->ptr;
        while(track!=NULL)
         {
            printf(" ( %d , %d ) ",track->i,track->j );
            track=track->link;
-        } 
-        printf("\n\n");   
+        }*/ 
+        //printf("");   
         copy=copy->next;
     }
+    printf("\n\n");
 
 }
+
+void bubblesort(struct label **header)
+	{
+		struct label *p1, *p2;
+		for(p1=*header;p1->next!=NULL;p1=p1->next)
+		{
+			for(p2=p1->next;p2!=NULL;p2=p2->next)
+			{
+				if(p1->l<p2->l)
+				{
+					struct label *t1, *t2, *tmp=p1->next, *q1=p1, *q2=p2;
+					
+                                        
+					
+				     if(q1->next!=q2){
+					for(t1=*header;t1!=NULL&&t1->next!=p1;t1=t1->next){}
+					
+                                        for(t2=*header;t2->next!=p2;t2=t2->next){}
+                                        q1->next=q2->next;
+					t2->next=q1;
+					p2=q1;
+					if(t1!=NULL)
+						t1->next=q2;
+					else   
+					  *header=q2;
+
+					q2->next=tmp;
+					p1=q2;
+					}
+					else{
+					  for(t1=*header;t1!=NULL&&t1->next!=p1;t1=t1->next){}
+					  q1->next=q2->next;
+					  q2->next=q1;
+					  p2=q1;
+					  if(t1!=NULL)
+						t1->next=q2;
+					  else
+						*header=q2;
+					  p1=q2;
+					}
+					//link_list_display(*header);
+				}
+			}
+		}
+	}
+
+
+struct pos* COG(struct label* q)
+{
+	int xavg=0,yavg=0,count=0;
+	for(struct pos *track=q->ptr;track!=NULL;track=track->link)
+	{
+		xavg+=track->x;
+		yavg+=track->y;
+		count++;
+	}
+	if(count==0)
+		return NULL;
+	struct pos *CG=(pos*)malloc(sizeof(pos));
+	CG->x=((double)xavg)/count;
+	CG->y=((double)yavg)/count;
+	return CG;
+}
+
+int decide_spatial(struct pos *first,struct pos *second)
+{
+	double x1=first->x,y1=first->y,x2=second->x,y2=second->y,dist=50;
+	if(sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))<dist)
+		return 1; //yes merge
+	else 
+		return 0; //don't
+}
+
+
 void createGraph(int data)
 {
     int m,n,count;
@@ -44,7 +119,7 @@ void createGraph(int data)
     struct pos *newnode;
     struct pos *track=NULL;
 
-    for(m=0,n=20;m<4;m++,n+=20)
+    for(m=0,n=20;m<8;m++,n+=20)
      {
         newNode=(struct label*)malloc(sizeof(struct label));
         newNode->avg=0.0;
@@ -59,9 +134,15 @@ void createGraph(int data)
             copy=newNode;
         }
      }
+        link_list_display(head);
+	bubblesort(&head);
+	link_list_display(head);
+
+
+	
    
   
-    copy=head;
+   /* copy=head;
     while(copy!=NULL)
     {
        track=copy->ptr;
@@ -123,11 +204,9 @@ void createGraph(int data)
                    mptr=mptr->link;
                 }
  		mptr->link=nptr;
-		/*while(M->next!=N)
-			M=M->next;*/
 		last->next=N->next;
 		N=NULL;
-	     link_list_display(head);
+	     link_list_display(head);*/
    
 
 }

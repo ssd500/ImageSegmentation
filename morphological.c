@@ -266,15 +266,16 @@ void link_list_display(struct label *h)
     }
 }
 
-double computeavg(struct pos *p,int data[][MAXCOL])
+int computeavg(struct pos *p,int data[][MAXCOL])
 {
-   int sum=0;
+   double sum=0;
    int count=0;
    for(struct pos *track=p;track!=NULL;track=track->link)
      {
        sum+=data[track->i][track->j];
        count++;
      }
+  // printf("[ %lf  ]\t",sum/count); 
    return sum/count;
 }
 
@@ -295,11 +296,46 @@ int avglabels(struct label *l)
 {
 	double sum=0.0;
 	int count=0;
-	for(struct label *k=l;k!=NULL;k=k->next){
-		sum+=k->len;
-		count++;
+	for(struct label *k=l;k!=NULL;k=k->next)
+        {
+	  //  if( (k->len >= (0.005*MAXROW*MAXCOL) ) && (k->len <= (0.60*MAXROW*MAXCOL) ) )	
+           //    {
+                 //printf("(%d %d %d )\t",k->len >= (0.01*MAXROW*MAXCOL),k->len <= (0.85*MAXROW*MAXCOL),k->len );
+                  sum+=k->len;
+		  count++;
+            //   }
+            //else
+              // printf(" Hello Bunny ");
 	}
+        //printf(" %f %d",sum,count);
 	return sum/count;
+}
+
+int median(struct label *head)
+{
+	int count=0;
+	int temp=-1;
+	for(struct label* h=head;h!=NULL;h=h->next)
+	{
+		if(temp!=h->len)
+		{
+			count++;
+			temp=h->len;
+		}
+			
+	}
+	int arr[count];
+	int p=0;
+	for(struct label* h=head;h!=NULL;h=h->next)
+	{
+		if(temp!=h->len)
+		{
+			arr[p++]=h->len;
+			temp=h->len;
+		}
+			
+	}
+	return arr[p/2];
 }
 
 double stddev(struct label *l)
@@ -361,40 +397,30 @@ void bubblesort(struct label **header)
 	}
 
 
-
-struct pos* COG(struct label* q)
+void COG(struct label* q,int *x, int *y)
 {
-	int xavg=0,yavg=0,count=0;
+	long long int xavg=0,yavg=0;
+        int count=0;
 	for(struct pos *track=q->ptr;track!=NULL;track=track->link)
 	{
 		xavg+=track->i;
 		yavg+=track->j;
 		count++;
 	}
-	if(count==0)
-		return NULL;
-	struct pos *CG=(struct pos*)malloc(sizeof(struct pos));
-	CG->i=((double)xavg)/count;
-	CG->j=((double)yavg)/count;
-	return CG;
+	/*if(count==0)
+		return NULL;*/
+        //printf(" %d ",count);
+	*x=(xavg/count);
+	*y=(yavg/count);
+       //printf(" [%lf %lf]\t",xavg,yavg);
+       //printf(" [%d %d]\t",*x,*y);
+          //printf(" %d\t",count);
 }
-
-int decide_spatial(struct pos *first,struct pos *second)
-{
-	double x1=first->i,y1=first->j,x2=second->i,y2=second->j,dist=20;
-	if(sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))<dist){
-		return 1; //yes merge
-	}
-	else {
-		return 0; //don't
-	}
-}
-
 
 void createGraph(int data[][MAXCOL],int visited[][MAXCOL],int lcount)
 {
     int m,n,count,sum;
-    double T=35.0;
+    int T=40;
     struct label *head=NULL;
     struct label *copy=NULL;   
     struct pos *track=NULL;
@@ -451,99 +477,83 @@ void createGraph(int data[][MAXCOL],int visited[][MAXCOL],int lcount)
       }
     
     //double s=stddev(head);
-    int a=avglabels(head);
-    printf("\nAvg: %d \n",a);
     bubblesort(&head);
-	copy=head;
+    copy=head;
     showLength(copy);  
-
-    int *nodes=(int *)malloc(sizeof(int)*lcount);
-    for(copy=head,m=0;copy!=NULL;copy=copy->next)
-        nodes[m++]=copy->avg;
-    
-
-   for(m=0;m<lcount;m++)
-       { 
-        for(n=m+1;n<lcount;n++)
-	 {
-          if(m!=n)
-          {
-           
-           if( nodes[m]!=-1 && nodes[n]!=-1 )
-           {
-              //printf(" m= %d n= %d\n ",m,n);
-              struct label *M=head;
-	      struct label *N=head,*last=NULL;
-              
-	      while(M!=NULL && M->avg!=nodes[m])    
-              M=M->next;
-              //printf(" M->avg= %d nodes[m]= %d \t",M->avg,nodes[m]);
-	      
-    	     while(N!=NULL && N->avg!=nodes[n])
-    	      {
-                 last=N;
-                 N=N->next;
-              } 
-	    //struct pos *mcg=COG(M),*ncg=COG(N);
-            //int g=decide_spatial(mcg,ncg);
-		//printf("%d\t",g);
-		//printf("%d,%d\t",m,n);
-	   // if(N->len < a && fabs(nodes[m]-nodes[n]) <= T )
-          
-            if( N->len<a )
-            {
-             Count++;    
-             struct pos *mptr=M->ptr;
-	     struct pos *nptr=N->ptr;
-	     struct pos *l=NULL;
-             while(mptr!=NULL)
-	      {	
-               l=mptr;
-               mptr=mptr->link;
-              }
-             l->link=nptr;
-             N->ptr=NULL;
-	     last->next=N->next;
-             //free(N);
-	     M->avg=computeavg(M->ptr,data);
-	     //M->len+=N->len;                
-            //printf(" %d----> ", M->len);
-             
-              struct pos *temp=M->ptr;
-              M->len=0;
-              while(temp!=NULL)
-               {
-                 M->len++;
-                 temp=temp->link;
-               }
-              // printf(" %d    m= %d n= %d\n", M->len,m,n);
-               //printf(" %d    m= %d n= %d  NSize= %d\n", M->len,m,n,N->len);
-             nodes[m]=M->avg;
-             nodes[n]=-1;
-             //N=NULL;             
-	    }
-            else
-            {
-                printf("\t[%d   %d]",N->len,a);
-            }  
-            /*copy=head;
-             int count=0;
-             while(copy!=NULL)
-                {
-                  count++;
-                  copy=copy->next;
-                }
-             printf("[ %d]\t",count);*/
-	    }
-           /*else
-            {
-               printf("[**  %d   %d  **]\t",nodes[m],nodes[n]);
-            }*/
-          }
+  //  int a=avglabels(head);
+	int a=median(head);
+    printf("\nAvg: %d \n",a);
+    int ar=0,ar1=0;
+    for(struct label *M=head;M->next!=NULL;M=M->next)
+         {		
+		printf(" %d ", ar++);
+     for(struct label *N=M->next, *last=NULL;N!=NULL;)
+            {       
         
-        }
-      }    
-      printf(" %d \n",Count);
+                 int x1=0,x2=0,y1=0,y2=0;
+                 double dist=50.0; 
+                 COG(M,&x1,&y1);
+                 COG(N,&x2,&y2);
+                 //printf(" $ ");
+                 //printf(" [(%d,%d) (%d,%d)]\t\t",x1,y1,x2,y2); 
+                 int g;
+                 double distance=sqrt( pow(x2-x1,2) + pow(y2-y1,2) );
+                 
+                 
+                 //if(distance <dist) 
+                   // printf(" [ %f ]\t",distance);
+                 
+                 if ( distance < dist )
+                      g=0;
+                  else 
+                      g=1;
+		  //printf("%d\t",g);
+		//printf("%d,%d\t",m,n);
+   	          int diff;
+                  if(abs(M->avg-N->avg)<=T)
+                    {
+                         diff=1;
+                        // printf(" (%d %d)\t",abs(M->avg-N->avg),diff);
+                    }
+                //printf("[ %d, %d, %d ]",N->len<a,g==0,diff==1);
+                 if( N->len<a && (g==0) && (diff==1) )
+                  {
+                       struct pos *mptr=M->ptr;
+	               struct pos *nptr=N->ptr;
+	               struct pos *l=NULL;
+                       while(mptr!=NULL)
+	               {	
+                          l=mptr;
+                          mptr=mptr->link;
+                       }
+                       l->link=nptr;
+                       N->ptr=NULL;
+	               last->next=N->next;
+                       N=N->next;
+                       //free(N);
+	               M->avg=computeavg(M->ptr,data);
+	               //printf(" %d ",M->len);            
+                       struct pos *temp=M->ptr;
+                       M->len=0;
+                       while(temp!=NULL)
+                        {
+                           M->len++;
+                           temp=temp->link;
+                        }
+                  }
+                else
+                  {
+                    // printf(" %f %d\t",grad,ar1);
+                     //ar1=ar1+1;
+                     last=N;
+                     N=N->next;
+                     //printf(" legth = %d  abs(M->avg-N->avg)=%d \t\t",N->len,abs(M->avg-N->avg));
+                  }
+		//N=N->next;
+            }
+            copy=head;
+            showLength(copy);
+          }    
     copy=head;
     int c=0,d=1;
     while(copy!=NULL)
@@ -555,30 +565,17 @@ void createGraph(int data[][MAXCOL],int visited[][MAXCOL],int lcount)
     copy=head;
     while(copy!=NULL)
     {
-     track=copy->ptr;
-     double l=computeavg(copy->ptr,data);
-     while(track!=NULL)
-      {
-       visited[track->i][track->j]=0;       
-       visited[track->i][track->j]=(int)l;
-       track=track->link;
-      }
-       //d++;
-     copy=copy->next;
+       track=copy->ptr;
+       int l=computeavg(copy->ptr,data);
+      while(track!=NULL)
+       {
+         visited[track->i][track->j]=0;       
+         visited[track->i][track->j]=l;
+         track=track->link;
+       }
+       copy=copy->next;
     }
   
-   /*copy=head;
-   while(copy!=NULL)
-   {
-     struct pos *temp=copy->ptr;
-     copy->len=0;
-     while(temp!=NULL)
-     {
-      copy->len++;
-      temp=temp->link;
-     }
-     copy=copy->next;
-   }*/
    copy=head;
    showLength(copy);
    writeFile(visited,"after_componentMerged.pgm"); 
@@ -739,7 +736,7 @@ int main()
     for(i=0;i<64;i++)
         local[i]=-1;
 
-    readFile(data,"3.pgm");
+    readFile(data,"317080.pgm");
     printf("done reading\n");
 
     filter(data,filterdata,MAXROW,MAXCOL);

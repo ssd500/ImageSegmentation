@@ -4,12 +4,13 @@
 #include<string.h>
 //FILE *f;
 //int i,j,k,l,r,c;
-#define MAXROW 135
+#define MAXROW 120
 #define MAXCOL 180
 
 struct label{
     int l;
     double avg;
+    int len;
     struct label *next;
     struct pos *ptr;
 };
@@ -82,7 +83,7 @@ void readFile(int data[][MAXCOL],char str[]){
               //  fscanf(f,"%d\t", &data[i][j]);
                 ch=fgetc(f);
                 data[i][j]=ch;
-                printf("%d\t",data[i][j]);
+                //printf("%d\t",data[i][j]);
             }
        }
        fclose(f);
@@ -232,19 +233,7 @@ void mark(int i,int j,int value,int level,int visit[][MAXCOL],int filterdata[][M
             mark(i-1,j,value,level,visit,filterdata,count);
          }
      }
-
-    ///North-East
-    if( (j+1)<=MAXCOL&&(i-1)>=0)
-     {
-       //cout<<" "<<visited_img.at<int>(i-1,j)<<endl;
-       if( visit[i-1][j+1]==0 )
-        if( filterdata[i-1][j+1]==value)
-         {
-            // pix_count++;
-            mark(i-1,j+1,value,level,visit,filterdata,count);
-         }
-     }
-    ///East
+     ///East
    if( (j+1)<=MAXCOL)
      {
        //cout<<" "<<visited_img.at<int>(i-1,j)<<endl;
@@ -253,18 +242,6 @@ void mark(int i,int j,int value,int level,int visit[][MAXCOL],int filterdata[][M
          {
             // pix_count++;
             mark(i,j+1,value,level,visit,filterdata,count);
-         }
-     }
-
-     ///South-East
-     if( (j+1)<=MAXCOL&&(i+1)<=MAXROW)
-     {
-       //cout<<" "<<visited_img.at<int>(i-1,j)<<endl;
-       if( visit[i+1][j+1]==0 )
-        if( filterdata[i+1][j+1]==value)
-         {
-            // pix_count++;
-            mark(i+1,j+1,value,level,visit,filterdata,count);
          }
      }
     ///South
@@ -278,6 +255,42 @@ void mark(int i,int j,int value,int level,int visit[][MAXCOL],int filterdata[][M
             mark(i+1,j,value,level,visit,filterdata,count);
          }
      }
+    ///West
+    if( (j-1)>=0)
+     {
+       //cout<<" "<<visited_img.at<int>(i-1,j)<<endl;
+       if( visit[i][j-1]==0 )
+        if( filterdata[i][j-1]==value)
+         {
+            // pix_count++;
+            mark(i,j-1,value,level,visit,filterdata,count);
+         }
+     }
+    ///North-East
+    if( (j+1)<=MAXCOL&&(i-1)>=0)
+     {
+       //cout<<" "<<visited_img.at<int>(i-1,j)<<endl;
+       if( visit[i-1][j+1]==0 )
+        if( filterdata[i-1][j+1]==value)
+         {
+            // pix_count++;
+            mark(i-1,j+1,value,level,visit,filterdata,count);
+         }
+     }
+   
+
+     ///South-East
+     if( (j+1)<=MAXCOL&&(i+1)<=MAXROW)
+     {
+       //cout<<" "<<visited_img.at<int>(i-1,j)<<endl;
+       if( visit[i+1][j+1]==0 )
+        if( filterdata[i+1][j+1]==value)
+         {
+            // pix_count++;
+            mark(i+1,j+1,value,level,visit,filterdata,count);
+         }
+     }
+   
 
      ///South-West
      if( (i+1)<=MAXROW&&(j-1)>=0)
@@ -290,17 +303,7 @@ void mark(int i,int j,int value,int level,int visit[][MAXCOL],int filterdata[][M
             mark(i+1,j-1,value,level,visit,filterdata,count);
          }
      }
-    ///West
-    if( (j-1)>=0)
-     {
-       //cout<<" "<<visited_img.at<int>(i-1,j)<<endl;
-       if( visit[i][j-1]==0 )
-        if( filterdata[i][j-1]==value)
-         {
-            // pix_count++;
-            mark(i,j-1,value,level,visit,filterdata,count);
-         }
-     }
+    
      /// North-West
     if( (j-1)>=0&&(i-1)>=0)
      {
@@ -331,7 +334,7 @@ void compMerge(int filterdata[][MAXCOL],int visited[][MAXCOL],int *no_of_label)
             mark(i,j,v,l,visited,filterdata,0);
           }
         }
-     printf("\n %d ",l);
+     printf("\nNo of initial component %d ",l);
      *no_of_label=l;
     writeFile(visited,"exp.pgm");
 
@@ -342,7 +345,7 @@ void link_list_display(struct label *h)
  
     while(copy!=NULL)
     {
-       printf(" %d :: ",copy->l );
+       printf("\n\n %d :: ",copy->l );
        struct pos *track=copy->ptr;
        while(track!=NULL)
         {
@@ -353,9 +356,54 @@ void link_list_display(struct label *h)
         copy=copy->next;
     }
 }
+
+double computeavg(struct pos *p,int data[][MAXCOL])
+{
+	         double sum=0;
+                 int count=0;
+                  for(struct pos *track=p;track!=NULL;track=track->link)
+                   {
+                      sum+=data[track->i][track->j];
+                      count++;
+                   }
+                  return sum/count;
+}
+
+
+void showLength(struct label *lb)
+{       printf("\n\n");
+	while(lb!=NULL){
+		printf("%d\t",lb->len);
+		lb=lb->next;
+         }
+}
+
+double avglabels(struct label *l)
+{
+	double sum=0.0;
+	int count=0;
+	for(struct label *k=l;k!=NULL;k=k->next){
+		sum+=k->len;
+		count++;
+	}
+	return sum/count;
+}
+
+double stddev(struct label *l)
+{
+	double sum=0.0;
+	int count=0;
+	double w=avglabels(l);
+	for(struct label *k=l;k!=NULL;k=k->next){
+		sum+=(k->len-w)*(k->len-w);
+		count++;
+	}
+	return sqrt(sum/count);
+}
+
 void createGraph(int data[][MAXCOL],int visited[][MAXCOL],int lcount)
 {
-    int m,n,count,T=10;
+    int m,n,count,T=45;
     double sum;
     struct label *head=NULL;
     struct label *copy=NULL;
@@ -367,6 +415,7 @@ void createGraph(int data[][MAXCOL],int visited[][MAXCOL],int lcount)
         struct label *newNode=(struct label*)malloc(sizeof(struct label));
         newNode->avg=0.0;
         newNode->l=n;
+	newNode->len=0;
         newNode->next=NULL;
         newNode->ptr=NULL;
 
@@ -382,7 +431,7 @@ void createGraph(int data[][MAXCOL],int visited[][MAXCOL],int lcount)
     struct label *tmp=head;
      while(tmp!=NULL)
       {
-         printf(" %d ",tmp->l);
+        // printf(" %d ",tmp->l);
          tmp=tmp->next;
       }
     copy=head;
@@ -396,6 +445,7 @@ void createGraph(int data[][MAXCOL],int visited[][MAXCOL],int lcount)
                     newnode=(struct pos*)malloc(sizeof(struct pos));
                     newnode->i=m;
                     newnode->j=n;
+		    copy->len++;
                     newnode->link=NULL;
                     if(copy->ptr==NULL)
                     {
@@ -410,18 +460,14 @@ void createGraph(int data[][MAXCOL],int visited[][MAXCOL],int lcount)
         copy=copy->next;
     }
    // link_list_display(head);
+	copy=head;
+	showLength(copy);
    
    for(copy=head;copy!=NULL;copy=copy->next)
     {
-        sum=0;
-        count=0;
-        for(track=copy->ptr;track!=NULL;track=track->link)
-        {
-            sum+=data[track->i][track->j];
-            count++;
-        }
-        copy->avg=sum/count;
+		copy->avg=computeavg(copy->ptr,data);
     }
+  
    
     double adj[lcount][lcount];
     double nodes[lcount];
@@ -433,39 +479,107 @@ void createGraph(int data[][MAXCOL],int visited[][MAXCOL],int lcount)
         for(n=0;n<lcount;n++)
             adj[m][n]=abs(nodes[m]-nodes[n]);
     
+    double s=stddev(head);
+    double a=avglabels(head);
+    printf("\nAvg: %f \nStddev:   %f",a,s);
+
+
     for(m=0;m<lcount;m++)
        { 
          for(n=m+1;n<lcount;n++)
-           if(adj[m][n]<T)
-            {
+	  {
+	   if( adj[m][n]!=-1)
+             {
               struct label *M=head;
 	      struct label *N=head,*last=NULL;
-	      while(M->avg!=nodes[m])
+              
+              while(nodes[m]!=-1 && M->avg!=nodes[m])
 		    M=M->next;
-	      while(N->avg!=nodes[n])
+
+	      while(nodes[n]!=-1 && N->avg!=nodes[n])
 		  {
-                       last=N;
-                       N=N->next;
+                    last=N;
+                    N=N->next;
                   } 
-              //printf("\n %f   %f   %f  %f\t",M->avg,N->avg,nodes[m],nodes[n]);
-	      struct pos *mptr=M->ptr;
-	      struct pos *nptr=N->ptr;
-	      
-              while(mptr->link!=NULL)
-		{	
-                   //printf(" \t[ %d  %d ] \t ",mptr->i,mptr->j); 
-                   mptr=mptr->link;
-                }
- 		//mptr->link=nptr;
-		
-		//last->next=N->next;
-		//N=NULL;
-	   }	
-
+	      if( N->len<a && adj[m][n]<T)
+                 {
+                    struct pos *mptr=M->ptr;
+	            struct pos *nptr=N->ptr;
+	        
+                    struct pos *l=NULL;
+                    while(mptr!=NULL)
+	   	     {	
+                       l=mptr;
+                       mptr=mptr->link;
+                     }
+                
+                    l->link=nptr;
+	            last->next=N->next;
+		    M->avg=computeavg(M->ptr,data);
+                
+                    nodes[m]=M->avg;
+                    nodes[n]=-1;
+                    for(int i=0;i<lcount;i++)
+		     {
+		       if(nodes[i]==-1)
+		          adj[m][i]=adj[i][m]=-1;
+		       else
+		        {
+		           //  printf("%f %f\t\t",adj[m][i],adj[i][m]);
+		           adj[m][i]=adj[i][m]=abs(nodes[m]-nodes[i]);
+		          //  printf("%f %f\n\n",adj[m][i],adj[i][m]);	
+                        }
+                        adj[n][i]=adj[i][n]=-1;
+		     }
+		    N=NULL;
+	         }
+	      }
+	   }
        }    
+     //link_list_display(head);
 
+     copy=head;
+     int c=0,d=1;
+     while(copy!=NULL)
+      { 
+        c++;
+        copy=copy->next;
+      }
+
+     printf(" \nNo of final component after merging %d\t ",c);
+
+    copy=head;
+    while(copy!=NULL)
+     {
+       track=copy->ptr;
+       while(track!=NULL)
+        {
+           visited[track->i][track->j]=(d)*20;
+           track=track->link;
+        }
+       d++;
+       copy=copy->next;
+     }
+     
+    copy=head;
+    while(copy!=NULL)
+     {
+	struct pos *temp=copy->ptr;
+	copy->len=0;
+	while(temp!=NULL)
+         {
+	   copy->len++;
+	   temp=temp->link;
+	 }
+        copy=copy->next;
+     }
+     copy=head;
+     showLength(copy);
+     writeFile(visited,"componentMerged.pgm"); 
 }
-int main(){
+
+int main()
+{
     printf("~");
     FILE *f;
     int i,j,max,lcount=0;
@@ -480,7 +594,7 @@ int main(){
     for(i=0;i<64;i++)
         local[i]=-1;
 
-    readFile(data,"3.pgm");
+    readFile(data,"126007.pgm");
   //  return(0);
     printf("done reading\n");
 
@@ -489,21 +603,20 @@ int main(){
     printf("done filtering\n");
 
     createHist(filterdata,MAXROW,MAXCOL,hist);
-    printf("\n\n");
+   // printf("\n\n");
 
     int numMax=localMax(hist,local);
 
-    printf("\n\n%d",numMax);
+    printf("\nNo. of local maxima %d",numMax);
 
-    for(i=0;i<numMax;i++)
-        printf("\n\n%d",local[i]);
+    //for(i=0;i<numMax;i++)
+       // printf("\n\n%d",local[i]);
 
     distribute(local,filterdata,MAXROW,MAXCOL,numMax);
 
-    printf("Done distributing");
+    printf("\nDone distributing");
 
     compMerge(filterdata,visited,&lcount);
-    printf("\n  %d ",lcount);
 
     createGraph(data,visited,lcount);
 
