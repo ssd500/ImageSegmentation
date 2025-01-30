@@ -51,6 +51,8 @@ int main()
             {
                 ch=fgetc(f);
                 data[i][j]=ch;
+                printf("%d\t",data[i][j]);
+
             }
        }
       fclose(f);

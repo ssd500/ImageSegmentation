@@ -10,22 +10,23 @@ int main()
     //char a[40];
     int flag=0;
     int i, j;
-    int r=64, c=64;
-    char s1[1],s2[1];
+    int r, c;
+    char s1[80],s2[80];
+    //unsigned char ch;
     unsigned char ch;
     FILE *f;
-    f=fopen("testout.pgm", "r");
+    f=fopen("wf5.pgm", "r");
     if (f==NULL)
       {
         printf("Cannot open");
         exit(1);
       }
-     fgets(s1,40,f);
+     fgets(s1,80,f);
      while(atoi(s1)!=255)
       {
        strcpy(s2,s1);
-       fgets(s1,1,f);
-       printf("*");
+       fgets(s1,80,f);
+       //printf("*");
       }
      i=0;
      while(s2[i]!=' ')
@@ -44,26 +45,35 @@ int main()
         j++;
         i++;
        }
+      s1[j]='\0';
       r=atoi(s1);
       printf("Col:%d, Row:%d\n",c,r);
+      s1[0]='\0';
+      int k;
       for(i=0;i<r;i++)
        {
            for(j=0;j<c;j++)
             {
-                ch=fgetc(f);
-                data[i][j]=ch;
+               ch=fgetc(f);
+               //printf("%c %d  ",ch,(int)ch);
+              // data[i][j]=atoi(s1);
+                data[i][j]=(int)ch;
+               //fscanf(f,"%d\t", &data[i][j]);
+               printf(" %d %d %d\t\t",data[i][j],i,j);
+
             }
        }
       fclose(f);
       f=fopen("testout.pgm", "w");
-      fprintf(f, "P2\n");
+      fprintf(f, "P5\n");
     fprintf(f, "%d %d\n", c, r);
     fprintf(f, "255\n");
     for (i=0; i<r; i++)
     {
-        for (j=0; j<c; j++)
-            fprintf(f, "%d\t", data[i][j]);
-        fprintf(f, "\n");
+        for (j=0; j<c; j++) { ch=data[i][j];
+            //fprintf(f, "%d ", data[i][j]);
+        //fprintf(f, "\n");
+              fputc(ch,f); }
     }
 
  /*   for (i=0; i<r; i++)

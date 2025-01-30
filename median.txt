@@ -1,0 +1,13 @@
+//after bubblesort
+
+int median(struct label *head)
+{
+	int count=0;
+	struct label *h;
+	for(h=head;h!=NULL;h=h->next)
+		count++;
+	
+	for(int i=0;i<count/2;i++)
+		h=h->next;
+	return h->len;
+}
